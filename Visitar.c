@@ -2,6 +2,7 @@
 #include<conio.h>
 #include<stdlib.h>
 #include<string.h>
+#include "Visitar.h"
 
 struct nodo {
     char *directorio; 

@@ -1,7 +1,7 @@
 
 
 OBJS = main.o Cola.o
-TARGET = program
+TARGET = duplicados
 CC = gcc
 
 all: $(TARGET) clean

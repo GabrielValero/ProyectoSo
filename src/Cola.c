@@ -2,17 +2,17 @@
 #include<conio.h>
 #include<stdlib.h>
 #include<string.h>
-#include "Visitado.h"
+#include "Cola.h"
 
 struct nodo {
     char *directorio; 
     struct nodo *sig;
 };
 
-struct nodo *raiz = NULL;
-struct nodo *fondo = NULL;
+//struct nodo *raiz = NULL;
+//struct nodo *fondo = NULL;
 
-int vacia()
+int vacia(struct nodo *raiz)
 {
     if (raiz == NULL)
         return 1;
@@ -20,14 +20,14 @@ int vacia()
         return 0;
 }
 
-void insertarVisitado(char *x)
+void insertar(char *x, struct nodo *raiz, struct nodo *fondo)
 {
     struct nodo *nuevo;
     nuevo = malloc(sizeof(struct nodo));
     nuevo->directorio = malloc(strlen(x) + 1); 
     strcpy(nuevo->directorio, x);
     nuevo->sig = NULL;
-    if (vacia())
+    if (vacia(raiz))
     {
         raiz = nuevo;
         fondo = nuevo;
@@ -39,9 +39,9 @@ void insertarVisitado(char *x)
     }
 }
 
-char* extraerVisitado()
+char* extraer(struct nodo *raiz, struct nodo *fondo)
 {
-    if (!vacia())
+    if (!vacia(raiz))
     {
         char *informacion = raiz->directorio;
         struct nodo *aux = raiz;
@@ -61,7 +61,7 @@ char* extraerVisitado()
         return NULL;
 }
 
-void liberar()
+void liberar(struct nodo *raiz)
 {
     struct nodo *recorrido = raiz;
     struct nodo *aux;

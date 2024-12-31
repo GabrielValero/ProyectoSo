@@ -1,16 +1,7 @@
 #include<stdio.h>
-#include<conio.h>
 #include<stdlib.h>
 #include<string.h>
 #include "Cola.h"
-
-struct nodo {
-    char *directorio; 
-    struct nodo *sig;
-};
-
-//struct nodo *raiz = NULL;
-//struct nodo *fondo = NULL;
 
 int vacia(struct nodo *raiz)
 {

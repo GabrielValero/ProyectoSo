@@ -3,81 +3,75 @@
 #include <string.h>
 #include "Cola.h"
 
-
-struct nodo {
-    char *directorio; 
-    struct nodo *sig;
+// Nodo que almacena un directorio
+struct node {
+    char *directory;
+    struct node *next;
 };
 
-struct Cola {
-    struct nodo *raiz;
-    struct nodo *fondo;
+// Cola que contiene nodos
+struct Queue {
+    struct node *front;
+    struct node *rear;
 };
 
 // Inicializa la cola
-void inicializarCola(struct Cola *cola)
-{
-    cola->raiz = NULL;
-    cola->fondo = NULL;
+void initializeQueue(struct Queue *queue) {
+    queue->front = NULL;
+    queue->rear = NULL;
 }
 
 // Devuelve si la cola está vacía
-int vacia(struct Cola *cola)
-{
-    return cola->raiz == NULL;
+int isEmpty(struct Queue *queue) {
+    return queue->front == NULL;
 }
 
-//Inserta elementos a la cola
+// Inserta elementos a la cola
+void enqueue(char *x, struct Queue *queue) {
+    struct node *newNode = malloc(sizeof(struct node));
+    newNode->directory = malloc(strlen(x) + 1);
+    strcpy(newNode->directory, x);
+    newNode->next = NULL;
 
-void insertar(char *x, struct Cola *cola)
-{
-    struct nodo *nuevo = malloc(sizeof(struct nodo));
-    nuevo->directorio = malloc(strlen(x) + 1); 
-    strcpy(nuevo->directorio, x);
-    nuevo->sig = NULL;
-
-    if (vacia(cola)) {
-        cola->raiz = nuevo;
-        cola->fondo = nuevo;
+    if (isEmpty(queue)) {
+        queue->front = newNode;
+        queue->rear = newNode;
     } else {
-        cola->fondo->sig = nuevo;
-        cola->fondo = nuevo;
+        queue->rear->next = newNode;
+        queue->rear = newNode;
     }
 }
 
-//Extrae elementos de la cola
-char* extraer(struct Cola *cola)
-{
-    if (!vacia(cola)) {
-        char *informacion = cola->raiz->directorio;
-        struct nodo *aux = cola->raiz;
+// Extrae elementos de la cola
+char* dequeue(struct Queue *queue) {
+    if (!isEmpty(queue)) {
+        char *info = queue->front->directory;
+        struct node *temp = queue->front;
 
-        if (cola->raiz == cola->fondo) {
-            cola->raiz = NULL;
-            cola->fondo = NULL;
+        if (queue->front == queue->rear) {
+            queue->front = NULL;
+            queue->rear = NULL;
         } else {
-            cola->raiz = cola->raiz->sig;
+            queue->front = queue->front->next;
         }
-        free(aux);
-        return informacion;
+        free(temp);
+        return info;
     } else {
         return NULL;
     }
 }
 
+// Libera la memoria
+void freeQueue(struct Queue *queue) {
+    struct node *current = queue->front;
+    struct node *temp;
 
-//Libera la memoria
-void liberar(struct Cola *cola)
-{
-    struct nodo *recorrido = cola->raiz;
-    struct nodo *aux;
-
-    while (recorrido != NULL) {
-        aux = recorrido;
-        recorrido = recorrido->sig;
-        free(aux->directorio);
-        free(aux);
+    while (current != NULL) {
+        temp = current;
+        current = current->next;
+        free(temp->directory);
+        free(temp);
     }
-    cola->raiz = NULL;
-    cola->fondo = NULL;
+    queue->front = NULL;
+    queue->rear = NULL;
 }

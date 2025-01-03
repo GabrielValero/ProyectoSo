@@ -1,13 +1,17 @@
-// Visitado.h
+//Cola.h
 #ifndef COLA_H
 #define COLA_H
-struct nodo {
-    char *directorio; 
-    struct nodo *sig;
+
+// Nodo que representa un elemento en la cola
+struct node {
+    char *directory;
+    struct node *next;
 };
-int vacia(struct nodo *);
-void insertar(char *, struct nodo *, struct nodo *);
-char* extraer(struct nodo *, struct nodo *);
-void liberar(struct nodo *);
+
+// Funciones de la cola
+int isEmpty(struct node *);
+void enqueue(char *, struct node *, struct node *);
+char* dequeue(struct node *, struct node *);
+void freeQueue(struct node *);
 
 #endif

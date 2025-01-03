@@ -1,66 +1,83 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "Cola.h"
 
-int vacia(struct nodo *raiz)
+
+struct nodo {
+    char *directorio; 
+    struct nodo *sig;
+};
+
+struct Cola {
+    struct nodo *raiz;
+    struct nodo *fondo;
+};
+
+// Inicializa la cola
+void inicializarCola(struct Cola *cola)
 {
-    if (raiz == NULL)
-        return 1;
-    else
-        return 0;
+    cola->raiz = NULL;
+    cola->fondo = NULL;
 }
 
-void insertar(char *x, struct nodo *raiz, struct nodo *fondo)
+// Devuelve si la cola está vacía
+int vacia(struct Cola *cola)
 {
-    struct nodo *nuevo;
-    nuevo = malloc(sizeof(struct nodo));
+    return cola->raiz == NULL;
+}
+
+//Inserta elementos a la cola
+
+void insertar(char *x, struct Cola *cola)
+{
+    struct nodo *nuevo = malloc(sizeof(struct nodo));
     nuevo->directorio = malloc(strlen(x) + 1); 
     strcpy(nuevo->directorio, x);
     nuevo->sig = NULL;
-    if (vacia(raiz))
-    {
-        raiz = nuevo;
-        fondo = nuevo;
-    }
-    else
-    {
-        fondo->sig = nuevo;
-        fondo = nuevo;
+
+    if (vacia(cola)) {
+        cola->raiz = nuevo;
+        cola->fondo = nuevo;
+    } else {
+        cola->fondo->sig = nuevo;
+        cola->fondo = nuevo;
     }
 }
 
-char* extraer(struct nodo *raiz, struct nodo *fondo)
+//Extrae elementos de la cola
+char* extraer(struct Cola *cola)
 {
-    if (!vacia(raiz))
-    {
-        char *informacion = raiz->directorio;
-        struct nodo *aux = raiz;
-        if (raiz == fondo)
-        {
-            raiz = NULL;
-            fondo = NULL;
-        }
-        else
-        {
-            raiz = raiz->sig;
+    if (!vacia(cola)) {
+        char *informacion = cola->raiz->directorio;
+        struct nodo *aux = cola->raiz;
+
+        if (cola->raiz == cola->fondo) {
+            cola->raiz = NULL;
+            cola->fondo = NULL;
+        } else {
+            cola->raiz = cola->raiz->sig;
         }
         free(aux);
         return informacion;
-    }
-    else
+    } else {
         return NULL;
+    }
 }
 
-void liberar(struct nodo *raiz)
+
+//Libera la memoria
+void liberar(struct Cola *cola)
 {
-    struct nodo *recorrido = raiz;
+    struct nodo *recorrido = cola->raiz;
     struct nodo *aux;
-    while (recorrido != NULL)
-    {
+
+    while (recorrido != NULL) {
         aux = recorrido;
         recorrido = recorrido->sig;
         free(aux->directorio);
-        free(aux); 
+        free(aux);
     }
+    cola->raiz = NULL;
+    cola->fondo = NULL;
 }

@@ -1,7 +1,7 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include "Cola.h"
+#include "Queue.h"
 
 
 void scanDirectory(char *route){

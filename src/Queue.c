@@ -1,19 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Cola.h"
-
-// Nodo que almacena un directorio
-struct node {
-    char *directory;
-    struct node *next;
-};
-
-// Cola que contiene nodos
-struct Queue {
-    struct node *front;
-    struct node *rear;
-};
+#include "Queue.h"
 
 // Inicializa la cola
 void initializeQueue(struct Queue *queue) {

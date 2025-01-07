@@ -1,6 +1,6 @@
 
 
-OBJS = main.o Cola.o
+OBJS = main.o Queue.o
 TARGET = duplicados
 CC = gcc
 

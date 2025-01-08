@@ -1,11 +1,60 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include "Queue.h"
 #include <string.h>
+#include <unistd.h>
+#include <semaphore.h>
+#include "Queue.h"
+#include <sys/types.h>
 
 struct Queue scanList;
 struct Queue scandedList;
+
+sem_t semMax;
+
+void scanDirectory(char *);
+
+int main(int argc, char *argv[]){
+    int pipefd[2];
+    int doubleCount = 0;
+    pid_t pid;
+
+    
+
+    initializeQueue(&scanList);
+    initializeQueue(&scandedList);
+
+    scanDirectory(argv[1]);
+
+    if(pipe(pipefd) == -1){
+        perror("Error al crear la tuberia");
+        exit(EXIT_FAILURE);
+    }
+    pid = vfork();
+    if(pid < 0){
+        perror("Error al crear otro proceso");
+        exit(EXIT_FAILURE);
+    }else if (pid == 0){
+        close(pipefd[0]);
+        while(!isEmpty(&scanList)){
+            dequeue(&scanList);
+            doubleCount++;
+        }
+        write(pipefd[0], doubleCount, sizeof(doubleCount));
+        close(pipefd[1]);
+        _exit(0);
+    }else{
+        close(pipefd[1]);
+        read(pipefd[0], doubleCount, sizeof(doubleCount));
+
+        printf("Hay %d elementos \n", doubleCount);
+        close(pipefd[0]);
+        wait(NULL);
+    }
+
+
+    return 0;
+}
 
 void scanDirectory(char *route){
     //abre la direccion
@@ -31,23 +80,14 @@ void scanDirectory(char *route){
         if(stat(completeDir, &info) == 0){
             //si es directorio que haga la recursividad
             if(S_ISDIR(info.st_mode)){
-                printf("Directorio: %s \n", completeDir);
+                //printf("Directorio: %s \n", completeDir);
                 scanDirectory(completeDir);
             }else if(S_ISREG(info.st_mode)){
                 //Sino ps que solo imprima la direccion, aqui va el uso de la cola
-                printf("Archivo: %s \n", completeDir);
+                //printf("Archivo: %s \n", completeDir);
                 enqueue(completeDir, &scanList);
             }
         }
     }
     closedir(dir);
 };
-
-int main(int argc, char *argv[]){
-    initializeQueue(&scanList);
-    initializeQueue(&scandedList);
-
-    scanDirectory(argv[1]);
-
-    return 0;
-}

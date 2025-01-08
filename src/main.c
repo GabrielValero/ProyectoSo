@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <semaphore.h>
 #include "Queue.h"
 #include <sys/types.h>
@@ -18,18 +19,39 @@ int main(int argc, char *argv[]){
     int pipefd[2];
     int doubleCount = 0;
     pid_t pid;
-
+    int opt;
+    char *initDirectory;
     
-
     initializeQueue(&scanList);
     initializeQueue(&scandedList);
 
-    scanDirectory(argv[1]);
+    while((opt = getopt(argc, argv, "t:d:m:")) != -1){
+        switch (opt)
+        {
+        case 't':
+            printf("-t %s \n", optarg);
+            sem_init(&semMax, 0, atoi(optarg)); //Modificalo como consideres
+            break;
+        case 'd':
+            printf("-d %s \n", optarg);
+            initDirectory = optarg;
+            break;
+        case 'm':
+            printf("-m %s \n", optarg);
+            break;
+        
+        default:
+            break;
+        }
+    }
 
+    scanDirectory(initDirectory);
+ 
     if(pipe(pipefd) == -1){
         perror("Error al crear la tuberia");
         exit(EXIT_FAILURE);
     }
+
     pid = vfork();
     if(pid < 0){
         perror("Error al crear otro proceso");
@@ -40,19 +62,19 @@ int main(int argc, char *argv[]){
             dequeue(&scanList);
             doubleCount++;
         }
-        write(pipefd[0], doubleCount, sizeof(doubleCount));
+        write(pipefd[0], &doubleCount, sizeof(doubleCount));
         close(pipefd[1]);
         _exit(0);
     }else{
         close(pipefd[1]);
-        read(pipefd[0], doubleCount, sizeof(doubleCount));
+        read(pipefd[0], &doubleCount, sizeof(doubleCount));
 
         printf("Hay %d elementos \n", doubleCount);
         close(pipefd[0]);
         wait(NULL);
     }
 
-
+    sem_destroy(&semMax);
     return 0;
 }
 

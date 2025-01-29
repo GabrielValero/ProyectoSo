@@ -73,9 +73,8 @@ int main(int argc, char *argv[]) {
         dVerify(filePath, files, &fileCount);
     }
 
-    if (modeLibrary) {
-        findDuplicates(files, fileCount);
-    }
+    findDuplicates(files, fileCount);
+    
 
     sem_destroy(&semMax);
     return 0;
@@ -87,7 +86,7 @@ void dVerify(char *filePath, struct file files[], int *fileCount) {
         char hashValue[33];
         if (MDFile(filePath, hashValue)) {
             //printf("Archivo: %s - Hash MD5: %s\n", filePath, hashValue);
-            *fileCount = addFile(files, *fileCount, filePath, hashValue);
+            *fileCount = addFile(files, *fileCount, filePath, hashValue);   //Agrega los elementos del struct 
         } else {
             printf("Error al calcular hash MD5 de %s\n", filePath);
         }

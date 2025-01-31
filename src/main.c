@@ -5,8 +5,10 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <semaphore.h>
-#include "Queue.h"
+#include <ctype.h>
 #include <sys/types.h>
+
+#include "Queue.h"
 
 struct Queue scanList;
 struct Queue scandedList;
@@ -14,33 +16,58 @@ struct Queue scandedList;
 sem_t semMax;
 
 void scanDirectory(char *);
+int isNumber(const char *);
 
 int main(int argc, char *argv[]){
     int pipefd[2];
     int doubleCount = 0;
-    pid_t pid;
     int opt;
+    char execOp;
+    pid_t pid;
+    struct stat info;
     char *initDirectory;
     
     initializeQueue(&scanList);
     initializeQueue(&scandedList);
 
-    while((opt = getopt(argc, argv, "t:d:m:")) != -1){
+    for(int i=0; i < 3; i++){
+        opt = getopt(argc, argv, "t:d:m:");
         switch (opt)
         {
         case 't':
-            printf("-t %s \n", optarg);
-            sem_init(&semMax, 0, atoi(optarg)); //Modificalo como consideres
+            if(isNumber(optarg)){
+                sem_init(&semMax, 0, atoi(optarg)); //Modificalo como consideres
+            }else{
+                printf("Ingrese una cantidad de semaforos positivo\n");
+                exit(EXIT_FAILURE);
+            }
             break;
         case 'd':
-            printf("-d %s \n", optarg);
             initDirectory = optarg;
+
+            if(stat(initDirectory, &info) == 0){
+                //si es directorio que haga la recursividad
+                if(!S_ISDIR(info.st_mode)){
+                    printf("La direccion no es un directorio\n");
+                    exit(EXIT_FAILURE);
+                }
+            }else{
+                printf("No existe la direccion\n");
+                exit(EXIT_FAILURE);
+            }
             break;
         case 'm':
-            printf("-m %s \n", optarg);
+            if(optarg[0] == 'e' || optarg[0] == 'l'){
+                execOp = optarg[0];
+            }else{
+                printf("Error al escoger entre modo ejecutable y modo biblioteca\n");
+                exit(EXIT_FAILURE);
+            }
             break;
         
         default:
+            printf("Error en los flags\n");
+            exit(1);
             break;
         }
     }
@@ -76,6 +103,15 @@ int main(int argc, char *argv[]){
 
     sem_destroy(&semMax);
     return 0;
+}
+
+int isNumber(const char *str){
+
+    while (*str){
+        if(!isdigit(*str)) return 0;
+        str++;
+    }
+    return 1;
 }
 
 void scanDirectory(char *route){

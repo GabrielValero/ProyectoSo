@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     struct stat info;
     int opt;
     char *initDirectory = NULL;
-
+    
     initializeQueue(&scanList);
     initializeQueue(&scannedList);
 
@@ -56,8 +56,10 @@ int main(int argc, char *argv[]) {
             }
             break;
         case 'm':
-            if(optarg[0] == 'e' || optarg[0] == 'l'){
-                execOp = optarg[0];
+            if(optarg[0] == 'e'){
+                modeLibrary = 1;
+            }else if(optarg[0] == 'l'){
+                modeLibrary = 0;
             }else{
                 printf("Error al escoger entre modo ejecutable y modo biblioteca\n");
                 exit(EXIT_FAILURE);
@@ -70,7 +72,6 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
-
     if (initDirectory) {
         scanDirectory(initDirectory, &scanList);
     }
@@ -79,12 +80,9 @@ int main(int argc, char *argv[]) {
         char *filePath = dequeue(&scanList);
         dVerify(filePath, files, &fileCount, modeLibrary);
     }
+    findDuplicates(files, fileCount, &scannedList);
 
-    // // if (modeLibrary) {
-    // //     findDuplicates(files, fileCount, scannedList);
-    // // }
-
-    // sem_destroy(&semMax);
+    sem_destroy(&semMax);
     return 0;
 }
 

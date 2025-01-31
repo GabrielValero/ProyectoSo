@@ -50,3 +50,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+.vscode/
+src/duplicados
+src/md5-app/md5

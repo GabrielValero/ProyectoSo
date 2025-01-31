@@ -34,33 +34,53 @@ void findDuplicates(struct file files[], int count);
 int main(int argc, char *argv[]) {
     int fileCount = 0;
     struct file files[MAX_FILES];
-
+    char execOp;
+    struct stat info;
     int opt;
     char *initDirectory = NULL;
 
     initializeQueue(&scanList);
     initializeQueue(&scannedList);
 
-    while ((opt = getopt(argc, argv, "t:d:m:")) != -1) {
-        switch (opt) {
-            case 't':
-                printf("-t %s \n", optarg);
-                sem_init(&semMax, 0, atoi(optarg)); // Modificalo segun sea necesario
-                break;
-            case 'd':
-                printf("-d %s \n", optarg);
-                initDirectory = optarg;
-                break;
-            case 'm':
-                printf("-m %s \n", optarg);
-                if (strcmp(optarg, "l") == 0) {
-                    modeLibrary = 1;  // Activar modo biblioteca
-                } else if (strcmp(optarg, "e") == 0) {
-                    // Modo ejecutable activado
+    for(int i=0; i < 3; i++){
+        opt = getopt(argc, argv, "t:d:m:");
+        switch (opt)
+        {
+        case 't':
+            if(isNumber(optarg)){
+                sem_init(&semMax, 0, atoi(optarg)); //Modificalo como consideres
+            }else{
+                printf("Ingrese una cantidad de semaforos positivo\n");
+                exit(EXIT_FAILURE);
+            }
+            break;
+        case 'd':
+            initDirectory = optarg;
+
+            if(stat(initDirectory, &info) == 0){
+                //si es directorio que haga la recursividad
+                if(!S_ISDIR(info.st_mode)){
+                    printf("La direccion no es un directorio\n");
+                    exit(EXIT_FAILURE);
                 }
-                break;
-            default:
-                break;
+            }else{
+                printf("No existe la direccion\n");
+                exit(EXIT_FAILURE);
+            }
+            break;
+        case 'm':
+            if(optarg[0] == 'e' || optarg[0] == 'l'){
+                execOp = optarg[0];
+            }else{
+                printf("Error al escoger entre modo ejecutable y modo biblioteca\n");
+                exit(EXIT_FAILURE);
+            }
+            break;
+        
+        default:
+            printf("Error en los flags\n");
+            exit(1);
+            break;
         }
     }
 

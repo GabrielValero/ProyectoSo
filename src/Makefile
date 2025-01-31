@@ -1,6 +1,6 @@
 
 
-OBJS = main.o Queue.o
+OBJS = main.o Queue.o Utils.o
 TARGET = duplicados
 CC = gcc
 

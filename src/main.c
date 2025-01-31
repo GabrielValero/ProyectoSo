@@ -10,7 +10,7 @@
 #include "md5-lib/global.h"
 #include "md5-lib/md5.h"
 
-#define MAX_FILES 500  // Máximo número de archivos a almacenar
+#define MAX_FILES 500  // Maximo numero de archivos a almacenar
 
 struct Queue scanList;
 struct Queue scannedList;
@@ -21,7 +21,7 @@ int modeLibrary = 0;  // 1 para biblioteca, 0 para ejecutable
 struct file {
     char directory[1024]; // Ruta del archivo
     char hash[33];        // Hash MD5
-    int check;            // Indicador de verificación
+    int check;            // Indicador de verificacion
 };
 
 
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
         switch (opt) {
             case 't':
                 printf("-t %s \n", optarg);
-                sem_init(&semMax, 0, atoi(optarg)); // Modifícalo según sea necesario
+                sem_init(&semMax, 0, atoi(optarg)); // Modificalo segun sea necesario
                 break;
             case 'd':
                 printf("-d %s \n", optarg);
@@ -73,8 +73,9 @@ int main(int argc, char *argv[]) {
         dVerify(filePath, files, &fileCount);
     }
 
-    findDuplicates(files, fileCount);
-    
+    if (modeLibrary) {
+        findDuplicates(files, fileCount);
+    }
 
     sem_destroy(&semMax);
     return 0;
@@ -86,7 +87,7 @@ void dVerify(char *filePath, struct file files[], int *fileCount) {
         char hashValue[33];
         if (MDFile(filePath, hashValue)) {
             //printf("Archivo: %s - Hash MD5: %s\n", filePath, hashValue);
-            *fileCount = addFile(files, *fileCount, filePath, hashValue);   //Agrega los elementos del struct 
+            *fileCount = addFile(files, *fileCount, filePath, hashValue);
         } else {
             printf("Error al calcular hash MD5 de %s\n", filePath);
         }
@@ -173,24 +174,31 @@ int addFile(struct file files[], int count, const char *directory, const char *h
 
 // Buscar y contar archivos duplicados
 void findDuplicates(struct file files[], int count) {
-    for (int i = 0; i < count; i++) {
+    int duplicates = 0; // Contador de duplicados
+    int i,j;
+    for (i = 0; i < count; i++) {
         if (files[i].check == 0) {
             continue; // Si ya fue revisado, lo saltamos
         }
+        
+        enqueue(files[i].directory, &scannedList); // se agrega a la cola
+        
 
-        int duplicates = 0; // Contador de duplicados
-
-        for (int j = i + 1; j < count; j++) {
+        for (j = i + 1; j < count; j++) {
             if (files[j].check == 1 && strcmp(files[i].hash, files[j].hash) == 0) {
-                printf("%s es duplicado de %s\n", files[j].directory, files[i].directory);
+                char *name1 = strrchr(files[j].directory, '/');
+                name1 = name1 ? name1 + 1 : files[j].directory;
+                char *name2 = strrchr(files[i].directory, '/');
+                name2 = name2 ? name2 + 1 : files[i].directory;
+                printf("%s es duplicado de %s\n", name1, name2);
                 files[j].check = 0; // Marcamos como revisado
                 duplicates++;
             }
         }
-
-        if (duplicates > 0) {
-            printf("Número de duplicados de: %d\n", duplicates);
-            files[i].check = 0; // Tambien marcamos el del principio como revisado
-        }
+            
+        files[i].check = 0; // Marcamos el del principio como revisado
+        
     }
+    printf("Número de duplicados: %d\n", duplicates);
 }
+

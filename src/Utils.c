@@ -11,23 +11,19 @@
 
 #include "Queue.h"
 #include "Utils.h"
-#include "md5-lib/global.h"
-#include "md5-lib/md5.h"
-
-
 
 void dVerify(char *filePath, struct file files[], int *fileCount, int modeLibrary) {
-    // if (modeLibrary) {
-    //     // Modo biblioteca
-        // char hashValue[33];
-        // if (MDFile(filePath, hashValue)) {
-        //     printf("Archivo: %s - Hash MD5: %s\n", filePath, hashValue);
-        //     *fileCount = addFile(files, *fileCount, filePath, hashValue);
-        // } else {
-        //     printf("Error al calcular hash MD5 de %s\n", filePath);
-        // }
-    // } else {
-        // Modo ejecutable
+    char hashValue[40];
+    if (modeLibrary) {
+    // Modo biblioteca
+        if (MDFile(filePath, hashValue)) {
+            printf("Archivo: %s - Hash MD5: %s\n", filePath, hashValue);
+            *fileCount = addFile(files, *fileCount, filePath, hashValue);
+        } else {
+            printf("Error al calcular hash MD5 de %s\n", filePath);
+        }
+    } else {
+        //Modo ejecutable
         int pipeChild[2], pipeParent[2];
         if(pipe(pipeChild) == -1){
             perror("Error al crear la tuberia");
@@ -45,16 +41,22 @@ void dVerify(char *filePath, struct file files[], int *fileCount, int modeLibrar
             execl("./md5-app/md5", "md5", filePath, NULL);
             exit(EXIT_FAILURE);
         }else{
-            char buffer[40];
             close(pipeChild[1]);
-            read(pipeChild[0], &buffer, sizeof(buffer));
-            printf("Finalizo con: %s\n", buffer);
+            ssize_t bytesRead = read(pipeChild[0], &hashValue, sizeof(hashValue)-1);
+            
+            //Para eliminar cualquier bit basura despues del hash
+            if(bytesRead > 0){
+                hashValue[bytesRead] = '\0';
+            }else{
+                hashValue[0] = '\0'; // Si no lee nada eliminar datos basura
+            }
+            *fileCount = addFile(files, *fileCount, filePath, hashValue);
             close(pipeChild[0]);
             wait(NULL);
         }
        
 
-    // }
+    }
 }
 
 void scanDirectory(char *route,struct Queue *scanList) {
@@ -87,7 +89,6 @@ void scanDirectory(char *route,struct Queue *scanList) {
                 scanDirectory(completeDir, scanList);
             }else if(S_ISREG(info.st_mode)){
                 //Sino ps que solo imprima la direccion, aqui va el uso de la cola
-                printf("Archivo: %s \n", completeDir);
                 enqueue(completeDir, scanList);
             }
         }

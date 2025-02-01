@@ -62,9 +62,9 @@ int main(int argc, char *argv[]) {
             break;
         case 'm':
             if(optarg[0] == 'e'){
-                modeLibrary = 1;
-            }else if(optarg[0] == 'l'){
                 modeLibrary = 0;
+            }else if(optarg[0] == 'l'){
+                modeLibrary = 1;
             }else{
                 printf("Error al escoger entre modo ejecutable y modo biblioteca\n");
                 exit(EXIT_FAILURE);

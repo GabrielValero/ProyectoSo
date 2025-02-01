@@ -39,6 +39,10 @@ int main(int argc, char *argv[]) {
         {
         case 't':
             if(isNumber(optarg)){
+                if(atoi(optarg) <= 0){
+                    printf("Ingrese una cantidad de semaforos positivo\n");
+                    exit(EXIT_FAILURE);
+                }
                 sem_init(&semMax, 0, atoi(optarg)); //Modificalo como consideres
                 sem_init(&semCount, 0, 1);
             }else{

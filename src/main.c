@@ -104,7 +104,9 @@ int main(int argc, char *argv[]) {
         i-=1;
     }
     findDuplicates(files, fileCount, &scannedList);
-
+    
+    freeQueue(&scanList);
+    freeQueue(&scanneedList);
     sem_destroy(&semMax);
     sem_destroy(&semCount);
     return 0;

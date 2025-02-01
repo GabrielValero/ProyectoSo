@@ -11,16 +11,21 @@
 
 #include "Queue.h"
 #include "Utils.h"
+#include "Semaforo.h"
 
-void dVerify(char *filePath, struct file files[], int *fileCount, int modeLibrary) {
+void *dVerify(void *arg) {
+    PthreadData *data = (PthreadData *) arg;
+    sem_wait(&semMax);
     char hashValue[40];
-    if (modeLibrary) {
+    
+    if (data->modeLibrary) {
     // Modo biblioteca
-        if (MDFile(filePath, hashValue)) {
-            printf("Archivo: %s - Hash MD5: %s\n", filePath, hashValue);
-            *fileCount = addFile(files, *fileCount, filePath, hashValue);
+        if (MDFile(data->filePath, hashValue)) {
+            sem_wait(&semCount);
+            *(data->fileCount) = addFile(data->files, *(data->fileCount), data->filePath, hashValue);
+            sem_post(&semCount);
         } else {
-            printf("Error al calcular hash MD5 de %s\n", filePath);
+            printf("Error al calcular hash MD5 de %s\n", data->filePath);
         }
     } else {
         //Modo ejecutable
@@ -38,10 +43,11 @@ void dVerify(char *filePath, struct file files[], int *fileCount, int modeLibrar
             close(pipeChild[0]);
             dup2(pipeChild[1], STDOUT_FILENO);
             close(pipeChild[1]);
-            execl("./md5-app/md5", "md5", filePath, NULL);
+            execl("./md5-app/md5", "md5", data->filePath, NULL);
             exit(EXIT_FAILURE);
         }else{
             close(pipeChild[1]);
+            wait(NULL);
             ssize_t bytesRead = read(pipeChild[0], &hashValue, sizeof(hashValue)-1);
             
             //Para eliminar cualquier bit basura despues del hash
@@ -50,16 +56,18 @@ void dVerify(char *filePath, struct file files[], int *fileCount, int modeLibrar
             }else{
                 hashValue[0] = '\0'; // Si no lee nada eliminar datos basura
             }
-            *fileCount = addFile(files, *fileCount, filePath, hashValue);
+            sem_wait(&semCount);
+            *(data->fileCount) = addFile(data->files, *(data->fileCount), data->filePath, hashValue);
+            sem_post(&semCount);
             close(pipeChild[0]);
-            wait(NULL);
         }
        
 
     }
+    sem_post(&semMax);
 }
 
-void scanDirectory(char *route,struct Queue *scanList) {
+void scanDirectory(char *route,struct Queue *scanList, int *countElement) {
     //abre la direccion
     DIR * dir = opendir(route);
     
@@ -86,16 +94,16 @@ void scanDirectory(char *route,struct Queue *scanList) {
             //si es directorio que haga la recursividad
             if(S_ISDIR(info.st_mode)){
                 //printf("Directorio: %s \n", completeDir);
-                scanDirectory(completeDir, scanList);
+                scanDirectory(completeDir, scanList, countElement);
             }else if(S_ISREG(info.st_mode)){
                 //Sino ps que solo imprima la direccion, aqui va el uso de la cola
+                *countElement+=1;
                 enqueue(completeDir, scanList);
             }
         }
     }
     closedir(dir);
 }
-
 
 // Agregar archivos al arreglo
 int addFile(struct file files[], int count, const char *directory, const char *hash) {
@@ -109,7 +117,6 @@ int addFile(struct file files[], int count, const char *directory, const char *h
     files[count].check = 1;  // Marcamos el archivo como no revisado
     return count + 1;        // Nuevo tamaño del arreglo
 }
-
 
 // Buscar y contar archivos duplicados
 void findDuplicates(struct file files[], int count, struct Queue *scannedList) {
@@ -140,7 +147,6 @@ void findDuplicates(struct file files[], int count, struct Queue *scannedList) {
     }
     printf("Número de duplicados: %d\n", duplicates);
 }
-
 
 int isNumber(const char *str){
 

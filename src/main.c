@@ -4,28 +4,32 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <pthread.h>
 #include <semaphore.h>
 #include <sys/types.h>
 #include <ctype.h>
 
 #include "Queue.h"
 #include "Utils.h"
+#include "Semaforo.h"
 
 struct Queue scanList;
 struct Queue scannedList;
 
 int modeLibrary;  // 1 para biblioteca, 0 para ejecutable
-sem_t semMax;
-
+int countElements = 0;
 
 int main(int argc, char *argv[]) {
+    
     int fileCount = 0;
-    struct file files[MAX_FILES];
+    
     char execOp;
     struct stat info;
     int opt;
     char *initDirectory = NULL;
     
+    
+
     initializeQueue(&scanList);
     initializeQueue(&scannedList);
 
@@ -35,7 +39,8 @@ int main(int argc, char *argv[]) {
         {
         case 't':
             if(isNumber(optarg)){
-                //sem_init(&semMax, 0, atoi(optarg)); //Modificalo como consideres
+                sem_init(&semMax, 0, atoi(optarg)); //Modificalo como consideres
+                sem_init(&semCount, 0, 1);
             }else{
                 printf("Ingrese una cantidad de semaforos positivo\n");
                 exit(EXIT_FAILURE);
@@ -73,16 +78,31 @@ int main(int argc, char *argv[]) {
         }
     }
     if (initDirectory) {
-        scanDirectory(initDirectory, &scanList);
+        scanDirectory(initDirectory, &scanList, &countElements);
     }
-
+    struct file files[countElements];
+    pthread_t thread[countElements];
+    PthreadData threadInfo[countElements];
+    int i = 0;
     while (!isEmpty(&scanList)) {
         char *filePath = dequeue(&scanList);
-        dVerify(filePath, files, &fileCount, modeLibrary);
+        threadInfo[i].fileCount = &fileCount;
+        threadInfo[i].filePath = filePath;
+        threadInfo[i].modeLibrary = modeLibrary;
+        threadInfo[i].files = malloc(sizeof(files));
+        threadInfo[i].files = files;
+        pthread_create(&thread[i], NULL, &dVerify, (void*) &threadInfo[i]);
+        i+=1;
+    }
+    while(i!= 0){
+        //free(threadInfo[i].files);
+        pthread_join(thread[i], NULL);
+        i-=1;
     }
     findDuplicates(files, fileCount, &scannedList);
 
     sem_destroy(&semMax);
+    sem_destroy(&semCount);
     return 0;
 }
 
